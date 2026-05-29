@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "APAX",
+    "slug": "apax",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0a0a0f",
+    "android": {
+      "package": "com.apax.assistant",
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET"
+      ]
+    },
+    "plugins": [
+      "@react-native-voice/voice"
+    ]
+  }
+}
