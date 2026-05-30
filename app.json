@@ -2,19 +2,43 @@
   "expo": {
     "name": "APAX",
     "slug": "apax",
-    "version": "0.1.0",
+    "version": "0.4.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#0a0a0f",
+    "backgroundColor": "#000000",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
     "android": {
       "package": "com.apax.assistant",
+      "versionCode": 4,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
       "permissions": [
         "RECORD_AUDIO",
-        "INTERNET"
+        "INTERNET",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "SYSTEM_ALERT_WINDOW",
+        "WRITE_SETTINGS",
+        "WAKE_LOCK"
       ]
     },
     "plugins": [
-      "@react-native-voice/voice"
-    ]
+      "@react-native-voice/voice",
+      "expo-notifications",
+      "expo-brightness",
+      "expo-keep-awake"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "apax-assistant"
+      }
+    }
   }
 }
