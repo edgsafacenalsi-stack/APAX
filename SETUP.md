@@ -1,53 +1,91 @@
-# APAX — Guía de instalación
+# APAX — Guía para generar el APK
 
 ## Requisitos
 - Node.js 18+
-- Expo CLI: `npm install -g expo-cli`
-- Android Studio (para emulador) o dispositivo físico con Expo Go
+- `npm install -g eas-cli`
+- Cuenta gratis en https://expo.dev
 
-## Pasos
+---
 
-### 1. Clonar el repo
+## Paso 1 — Clonar y configurar
+
 ```bash
 git clone https://github.com/edgsafacenalsi-stack/APAX.git
 cd APAX
-```
-
-### 2. Instalar dependencias
-```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
-```bash
-cp .env.example .env
+Crear el archivo `.env` en la raíz:
 ```
-Editar `.env` y agregar tu API key de Anthropic:
-```
-ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_API_KEY=sk-ant-api03-TU_KEY_AQUI
 APAX_LANGUAGE=es
 ```
 
-### 4. Ejecutar en Android
+> Tu API key la obtenés en https://console.anthropic.com
+
+---
+
+## Paso 2 — Prebuild (genera carpeta android/)
+
+```bash
+npm run prebuild
+# equivale a: expo prebuild --clean
+```
+
+Solo hace falta correrlo una vez, o cuando cambian los plugins nativos.
+
+---
+
+## Paso 3 — Generar APK con EAS
+
+```bash
+eas login          # te pide usuario de expo.dev
+eas build:configure  # primera vez, asocia el proyecto
+npm run build:apk  # sube a la nube y compila
+```
+
+EAS tarda ~10 minutos y te manda un **link de descarga del APK**.
+
+---
+
+## Paso 4 — Instalar en el teléfono
+
+1. Descargar el `.apk` del link de EAS
+2. En Android: Ajustes → Seguridad → Instalar apps desconocidas → permitir
+3. Abrir el APK descargado e instalar
+
+---
+
+## Desarrollo local (sin APK)
+
+Para probar con recarga en caliente — requiere dispositivo físico Android conectado por USB:
+
 ```bash
 npm run android
 ```
-O en dispositivo físico:
-```bash
-npx expo start
-```
-Escanear el QR con la app **Expo Go**.
 
-## Notas
-- El reconocimiento de voz (`@react-native-voice/voice`) requiere build nativo — no funciona en Expo Go puro. Para producción usar `expo prebuild`.
-- Permisos de micrófono se solicitan automáticamente al primer uso.
-- El brillo del sistema requiere permisos especiales en Android 6+, se solicitan al primer comando de brillo.
+> Nota: el STT (`@react-native-voice/voice`) NO funciona en Expo Go ni en emulador sin micrófono real.
+
+---
+
+## Variables de EAS Build (producción)
+
+Para builds en la nube sin exponer el `.env`, configurar en EAS:
+
+```bash
+eas secret:create --scope project --name ANTHROPIC_API_KEY --value sk-ant-...
+```
+
+Esto inyecta la key en el build sin que esté en el repo.
+
+---
 
 ## Estructura
 ```
-app/          → pantallas
-components/   → UI modular
-hooks/        → lógica de sesión de voz
-services/     → Claude API, STT, TTS, sistema, comandos, memoria
-store/        → estado global
+app/              → pantallas (HUD, Historial, Config)
+components/       → UI modular
+hooks/            → lógica (voz, wake word, proactivo, keep awake)
+services/         → Claude, STT, TTS, clima, sistema, memoria
+store/            → estado global
+assets/           → ícono y splash
 ```
