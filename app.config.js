@@ -1,14 +1,10 @@
-// app.config.js
-// Carga variables de entorno desde .env y las expone al bundle via expo-constants
-// Este archivo reemplaza app.json en tiempo de build
-
 import "dotenv/config";
 
 export default {
   expo: {
     name: "APAX",
     slug: "apax",
-    version: "0.4.0",
+    version: "0.4.1",
     orientation: "portrait",
     userInterfaceStyle: "dark",
     backgroundColor: "#000000",
@@ -42,12 +38,9 @@ export default {
       "expo-keep-awake",
     ],
     extra: {
-      // Disponible via Constants.expoConfig.extra en runtime
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? "",
+      GROQ_API_KEY: process.env.GROQ_API_KEY ?? "",
       APAX_LANGUAGE: process.env.APAX_LANGUAGE ?? "es",
-      eas: {
-        projectId: "apax-assistant",
-      },
+      eas: { projectId: "apax-assistant" },
     },
   },
 };
