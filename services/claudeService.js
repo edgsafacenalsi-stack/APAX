@@ -1,35 +1,42 @@
 // services/claudeService.js
-// Módulo: comunicación con Claude API
+// Módulo: comunicación con Groq API (compatible OpenAI, gratuita)
+// Modelo: llama-3.1-8b-instant — rápido y funciona bien en español
 
-import { ANTHROPIC_API_KEY } from "./config";
+import { GROQ_API_KEY } from "./config";
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL = "llama-3.1-8b-instant";
 
 export async function askApax({ message, history = [], language = "es", contextNote = "" }) {
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY no configurada. Revisá app.config.js.");
+  if (!GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY no configurada. Revisá app.config.js.");
   }
 
   const basePrompt = language === "es"
     ? "Eres APAX, un asistente de IA personal. Respondés de forma concisa, clara y directa en español rioplatense. Cada acción que realizás la anunciás brevemente antes de ejecutarla. Sos eficiente, no verbose."
-    : "You are APAX, a personal AI assistant. You respond concisely, clearly and directly in English. You briefly announce each action before executing it. Be efficient, not verbose.";
+    : "You are APAX, a personal AI assistant. Respond concisely and directly. Announce each action briefly before executing it.";
 
   const systemPrompt = contextNote
     ? `${basePrompt}\n\nContexto adicional: ${contextNote}`
     : basePrompt;
 
-  const response = await fetch(ANTHROPIC_API_URL, {
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-20),
+    { role: "user", content: message },
+  ];
+
+  const response = await fetch(GROQ_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
+      "Authorization": `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: MODEL,
+      messages,
       max_tokens: 1024,
-      system: systemPrompt,
-      messages: [...history.slice(-20), { role: "user", content: message }],
+      temperature: 0.7,
     }),
   });
 
@@ -39,5 +46,5 @@ export async function askApax({ message, history = [], language = "es", contextN
   }
 
   const data = await response.json();
-  return data.content?.[0]?.text ?? "";
+  return data.choices?.[0]?.message?.content?.trim() ?? "";
 }
