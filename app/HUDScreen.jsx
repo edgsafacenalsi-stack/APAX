@@ -1,8 +1,8 @@
 // app/HUDScreen.jsx
-// Módulo: pantalla principal HUD — voz, log, wake word
+// Pantalla principal HUD
 
-import React from "react";
-import { View, StyleSheet, Text } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Text, Alert } from "react-native";
 import { useApax } from "../store/apaxStore";
 import ActionLog from "../components/ActionLog";
 import VoiceButton from "../components/VoiceButton";
@@ -14,23 +14,40 @@ import { useVoiceSession } from "../hooks/useVoiceSession";
 import { useWakeWord } from "../hooks/useWakeWord";
 import { useProactive } from "../hooks/useProactive";
 import { useKeepAwake } from "../hooks/useKeepAwake";
+import { isSTTAvailable } from "../services/sttService";
+import { requestMicPermission } from "../services/speechService";
 
 export default function HUDScreen() {
-  const { state } = useApax();
+  const { state, dispatch } = useApax();
   const { activate } = useVoiceSession();
+  const [sttReady, setSttReady] = useState(null); // null=checking, true/false
 
-  // Mantiene pantalla encendida al escuchar/hablar
   useKeepAwake();
-
-  // Proactivo al iniciar
   useProactive();
 
-  // Wake word
   const { wakeActive, partialText, toggle: toggleWake } = useWakeWord({
     onWake: () => activate(),
   });
 
-  if (!state.ready) {
+  useEffect(() => {
+    (async () => {
+      const micOk = await requestMicPermission();
+      if (!micOk) {
+        dispatch({ type: "LOG_ACTION", payload: "⚠ Permiso de micrófono denegado" });
+        setSttReady(false);
+        return;
+      }
+      const avail = await isSTTAvailable();
+      setSttReady(avail);
+      if (!avail) {
+        dispatch({ type: "LOG_ACTION", payload: "⚠ STT no disponible en este dispositivo" });
+      } else {
+        dispatch({ type: "LOG_ACTION", payload: "◎ Sistema listo" });
+      }
+    })();
+  }, []);
+
+  if (!state.ready || sttReady === null) {
     return (
       <View style={styles.loading}>
         <Text style={styles.loadingText}>INICIANDO APAX...</Text>
@@ -47,11 +64,11 @@ export default function HUDScreen() {
       <WakeWordIndicator
         active={wakeActive}
         partialText={partialText}
-        onToggle={toggleWake}
+        onToggle={sttReady ? toggleWake : null}
       />
       <WaveformIndicator />
       <View style={styles.controls}>
-        <VoiceButton onPress={activate} />
+        <VoiceButton onPress={sttReady ? activate : null} disabled={!sttReady} />
       </View>
       <ApaxStatusBar />
     </View>
@@ -59,14 +76,12 @@ export default function HUDScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  container: { flex: 1, padding: 16, backgroundColor: "#0a0a0f" },
   logContainer: {
     flex: 1, borderWidth: 1,
     borderColor: "#1a1a2e", borderRadius: 4, marginBottom: 8,
   },
-  controls: {
-    paddingVertical: 16, alignItems: "center",
-  },
-  loading: { flex: 1, alignItems: "center", justifyContent: "center" },
+  controls: { paddingVertical: 16, alignItems: "center" },
+  loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0a0a0f" },
   loadingText: { color: "#00d4ff", fontFamily: "monospace", letterSpacing: 4, fontSize: 12 },
 });
