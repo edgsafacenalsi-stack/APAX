@@ -1,41 +1,51 @@
 // services/sttService.js
-// Módulo: reconocimiento de voz (STT) nativo para Android
+// Módulo: reconocimiento de voz (STT) nativo Android
 // Usa @react-native-voice/voice
 
 import Voice from "@react-native-voice/voice";
 
-let _onResult = null;
-let _onError = null;
-let _onStart = null;
-let _onEnd = null;
+let _callbacks = {};
 
 export function initSTT({ onResult, onError, onStart, onEnd }) {
-  _onResult = onResult;
-  _onError = onError;
-  _onStart = onStart;
-  _onEnd = onEnd;
+  _callbacks = { onResult, onError, onStart, onEnd };
 
-  Voice.onSpeechStart = () => _onStart?.();
-  Voice.onSpeechEnd = () => _onEnd?.();
+  Voice.onSpeechStart   = () => _callbacks.onStart?.();
+  Voice.onSpeechEnd     = () => _callbacks.onEnd?.();
+  Voice.onSpeechError   = (e) => _callbacks.onError?.(e?.error?.message ?? "STT error");
   Voice.onSpeechResults = (e) => {
-    const text = e.value?.[0] ?? "";
-    _onResult?.(text);
+    const text = e?.value?.[0]?.trim() ?? "";
+    if (text) _callbacks.onResult?.(text);
   };
-  Voice.onSpeechError = (e) => _onError?.(e.error?.message ?? "Error STT");
+  // Resultado parcial — útil para wake word
+  Voice.onSpeechPartialResults = (e) => {
+    const text = e?.value?.[0]?.trim() ?? "";
+    if (text) _callbacks.onResult?.(text);
+  };
 }
 
-export async function startListening(language = "es") {
+export async function startListening(language = "es", overrideCallbacks = null) {
+  if (overrideCallbacks) {
+    Voice.onSpeechResults = (e) => {
+      const text = e?.value?.[0]?.trim() ?? "";
+      if (text) overrideCallbacks.onResult?.(text);
+    };
+    Voice.onSpeechPartialResults = (e) => {
+      const text = e?.value?.[0]?.trim() ?? "";
+      if (text) overrideCallbacks.onResult?.(text);
+    };
+    Voice.onSpeechError = (e) => overrideCallbacks.onError?.(e?.error?.message ?? "STT error");
+  }
+
   try {
-    await Voice.start(language === "es" ? "es-AR" : "en-US");
+    const locale = language === "es" ? "es-AR" : "en-US";
+    await Voice.start(locale);
   } catch (err) {
-    _onError?.(err.message);
+    _callbacks.onError?.(err.message);
   }
 }
 
 export async function stopListening() {
-  try {
-    await Voice.stop();
-  } catch (_) {}
+  try { await Voice.stop(); } catch (_) {}
 }
 
 export async function destroySTT() {
@@ -43,4 +53,13 @@ export async function destroySTT() {
     await Voice.destroy();
     Voice.removeAllListeners();
   } catch (_) {}
+}
+
+export async function isSTTAvailable() {
+  try {
+    const avail = await Voice.isAvailable();
+    return !!avail;
+  } catch (_) {
+    return false;
+  }
 }
