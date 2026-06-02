@@ -42,6 +42,9 @@ export default {
     extra: {
       GROQ_API_KEY: process.env.GROQ_API_KEY ?? "",
       APAX_LANGUAGE: process.env.APAX_LANGUAGE ?? "es",
+      eas: {
+        projectId: "b808e017-3044-449d-aae3-5ab0b6f4efc9",
+      },
     },
   },
 };
