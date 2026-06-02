@@ -35,7 +35,6 @@ export default {
       "@react-native-voice/voice",
       "expo-notifications",
       "expo-brightness",
-      "expo-keep-awake",
     ],
     extra: {
       GROQ_API_KEY: process.env.GROQ_API_KEY ?? "",
