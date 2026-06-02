@@ -14,6 +14,9 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#000000",
     },
+    ios: {
+      bundleIdentifier: "com.apax.assistant",
+    },
     android: {
       package: "com.apax.assistant",
       versionCode: 4,
